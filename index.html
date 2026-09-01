@@ -634,7 +634,8 @@
             📊 학생 학습 기록 관리 페이지
           </h2>
           <p style="font-size:0.85rem; color:var(--text-muted); margin-top:0.2rem;">
-            관리자 계정: <span id="currentAdminEmailDisplay" style="font-weight:700; color:var(--primary);"></span>
+            접속 계정: <span id="currentAdminEmailDisplay" style="font-weight:700; color:var(--primary);"></span> 
+            <span id="adminRoleBadge" style="background:#eff6ff; color:#1e3a8a; padding:2px 8px; border-radius:999px; font-size:0.75rem; font-weight:800; border:1px solid #bfdbfe; margin-left:4px;">메인 관리자</span>
           </p>
         </div>
         <div style="display:flex; gap:0.5rem;">
@@ -643,34 +644,85 @@
         </div>
       </div>
 
-      <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.75rem;">
-        <input type="text" id="adminSearchInput" placeholder="🔍 학생 이름으로 검색..." class="typing-input" style="max-width:240px; padding:0.5rem 0.8rem; font-size:0.88rem; margin-bottom:0;" oninput="filterAdminTable()" />
-        <div style="display:flex; gap:0.5rem;">
-          <button class="btn btn-outline" style="padding:0.5rem 0.9rem; font-size:0.85rem;" onclick="loadAdminRecords()">🔄 새로고침</button>
-          <button class="btn btn-primary" style="padding:0.5rem 0.9rem; font-size:0.85rem;" onclick="exportAdminDataCSV()">📥 엑셀(CSV) 다운로드</button>
+      <!-- Admin Navigation Sub-tabs -->
+      <div style="display:flex; gap:0.5rem; margin-bottom:1rem; border-bottom:1.5px solid var(--border); padding-bottom:0.5rem;">
+        <button id="tabBtnRecords" class="btn btn-primary" style="padding:0.45rem 1rem; font-size:0.85rem;" onclick="switchAdminSubTab('records')">📋 학생 학습 기록</button>
+        <button id="tabBtnTeachers" class="btn btn-outline" style="padding:0.45rem 1rem; font-size:0.85rem; display:none;" onclick="switchAdminSubTab('teachers')">👥 선생님 계정 & 권한 관리</button>
+      </div>
+
+      <!-- Tab 1: Student Records View -->
+      <div id="adminViewRecords">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+          <input type="text" id="adminSearchInput" placeholder="🔍 학생 이름으로 검색..." class="typing-input" style="max-width:240px; padding:0.5rem 0.8rem; font-size:0.88rem; margin-bottom:0;" oninput="filterAdminTable()" />
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-outline" style="padding:0.5rem 0.9rem; font-size:0.85rem;" onclick="loadAdminRecords()">🔄 새로고침</button>
+            <button id="btnExportCSV" class="btn btn-primary" style="padding:0.5rem 0.9rem; font-size:0.85rem;" onclick="exportAdminDataCSV()">📥 엑셀(CSV) 다운로드</button>
+          </div>
+        </div>
+
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>완료 일시</th>
+                <th>학생 이름</th>
+                <th>학습 모드</th>
+                <th>선택 단원</th>
+                <th>학습 언어</th>
+                <th>정답 / 전체</th>
+                <th>정답률</th>
+                <th>스트릭</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody">
+              <tr>
+                <td colspan="8" style="text-align:center; padding:2rem; color:var(--text-muted);">기록을 불러오는 중입니다...</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <div class="admin-table-container">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>완료 일시</th>
-              <th>학생 이름</th>
-              <th>학습 모드</th>
-              <th>선택 단원</th>
-              <th>학습 언어</th>
-              <th>정답 / 전체</th>
-              <th>정답률</th>
-              <th>스트릭</th>
-            </tr>
-          </thead>
-          <tbody id="adminTableBody">
-            <tr>
-              <td colspan="8" style="text-align:center; padding:2rem; color:var(--text-muted);">기록을 불러오는 중입니다...</td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Tab 2: Teacher Account & Permission Management View (Main Admin Only) -->
+      <div id="adminViewTeachers" style="display:none;">
+        <div style="background:#f8fafc; border:1px solid var(--border); border-radius:12px; padding:1.2rem; margin-bottom:1.25rem;">
+          <h3 style="font-size:1.05rem; font-weight:800; color:var(--primary); margin-bottom:0.4rem;">➕ 새 선생님 추가 및 권한 부여</h3>
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:1rem;">
+            등록된 구글 이메일로 로그인하는 선생님만 관리 페이지에 접속하여 학생 결과를 조회할 수 있습니다.
+          </p>
+          <div style="display:flex; flex-wrap:wrap; gap:0.75rem; align-items:center; margin-bottom:0.75rem;">
+            <input type="email" id="newTeacherEmail" placeholder="선생님 구글 이메일 (예: teacher@gmail.com)" class="typing-input" style="flex:1; min-width:260px; padding:0.6rem 0.9rem; font-size:0.9rem; margin-bottom:0;" />
+            <button class="btn btn-primary" style="padding:0.6rem 1.2rem; font-size:0.88rem;" onclick="registerNewTeacher()">선생님 등록</button>
+          </div>
+          <div style="display:flex; gap:1.5rem; align-items:center; font-size:0.85rem; font-weight:700; color:var(--text-main);">
+            <label style="display:inline-flex; align-items:center; gap:0.4rem; cursor:pointer;">
+              <input type="checkbox" id="permExportCSV" checked /> 📥 엑셀(CSV) 다운로드 허용
+            </label>
+            <label style="display:inline-flex; align-items:center; gap:0.4rem; cursor:pointer;">
+              <input type="checkbox" id="permDeleteRecord" /> 🗑️ 학생 기록 삭제 권한 허용
+            </label>
+          </div>
+        </div>
+
+        <h3 style="font-size:1.05rem; font-weight:800; color:var(--primary); margin-bottom:0.5rem;">👥 등록된 선생님 목록</h3>
+        <div class="admin-table-container" style="max-height:260px;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>선생님 구글 이메일</th>
+                <th>엑셀 다운로드 권한</th>
+                <th>학생 기록 삭제 권한</th>
+                <th>등록일</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="teacherTableBody">
+              <tr>
+                <td colspan="5" style="text-align:center; padding:1.5rem; color:var(--text-muted);">선생님 목록을 불러오는 중...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -1199,14 +1251,16 @@
     }
 
     /* --------------------------------------------------
-       TEACHER ADMIN DASHBOARD (SECURE HASH AUTH PROTECTED)
+       TEACHER ADMIN DASHBOARD (ROLE & PERMISSION CONTROL)
     -------------------------------------------------- */
-    // 🛡️ 보안 관리자 해시 키 (이메일 원문이 코드에 노출되지 않도록 단방향 암호화 처리됨)
-    const AUTH_ADMIN_HASHES = [
-      "a58dc0e3f38d3499e9e8e184cfc35a3a4aaae15ac75aa81a3e5248fe4f260cc8" // 메인 관리자 인증 해시
+    // 🛡️ 메인 관리자 해시 키 (evernewyum@gmail.com)
+    const AUTH_MAIN_ADMIN_HASHES = [
+      "a58dc0e3f38d3499e9e8e184cfc35a3a4aaae15ac75aa81a3e5248fe4f260cc8"
     ];
 
     let currentAdminUser = null;
+    let currentUserRole = null; // 'MAIN_ADMIN' | 'TEACHER'
+    let currentTeacherPermissions = { canExportCSV: true, canDeleteRecord: false };
 
     async function hashString(str) {
       const msgBuffer = new TextEncoder().encode(str.trim().toLowerCase());
@@ -1223,17 +1277,14 @@
         document.getElementById('currentAdminEmailDisplay').textContent = email;
       } else {
         currentAdminUser = null;
+        currentUserRole = null;
       }
     });
 
     async function openAdminAuthModal() {
       if (currentAdminUser && currentAdminUser.email) {
-        const userHash = await hashString(currentAdminUser.email);
-        if (AUTH_ADMIN_HASHES.includes(userHash)) {
-          document.getElementById('adminModal').classList.add('show');
-          loadAdminRecords();
-          return;
-        }
+        await verifyAndOpenDashboard(currentAdminUser.email);
+        return;
       }
       document.getElementById('adminAuthError').style.display = 'none';
       document.getElementById('adminPwModal').classList.add('show');
@@ -1249,22 +1300,200 @@
         .then(async (result) => {
           const user = result.user;
           const email = user.email || '';
-          const userHash = await hashString(email);
-          
-          if (AUTH_ADMIN_HASHES.includes(userHash)) {
-            closeAdminAuthModal();
-            document.getElementById('currentAdminEmailDisplay').textContent = email;
-            document.getElementById('adminModal').classList.add('show');
-            loadAdminRecords();
-          } else {
-            document.getElementById('adminAuthError').style.display = 'block';
-            firebase.auth().signOut();
-          }
+          await verifyAndOpenDashboard(email);
         })
         .catch((error) => {
           console.error("Google Auth Error:", error);
           alert("로그인 중 오류가 발생했습니다: " + error.message);
         });
+    }
+
+    async function verifyAndOpenDashboard(email) {
+      const userHash = await hashString(email);
+      const isMainAdmin = AUTH_MAIN_ADMIN_HASHES.includes(userHash);
+
+      if (isMainAdmin) {
+        currentUserRole = 'MAIN_ADMIN';
+        currentTeacherPermissions = { canExportCSV: true, canDeleteRecord: true };
+        applyRoleUI(true, email);
+        closeAdminAuthModal();
+        document.getElementById('adminModal').classList.add('show');
+        loadAdminRecords();
+        loadTeacherList();
+        return;
+      }
+
+      // Check if registered as Sub-Teacher in Firestore
+      if (!db) {
+        alert("데이터베이스에 연결할 수 없습니다.");
+        return;
+      }
+
+      try {
+        const docRef = await db.collection("teacher_roles").doc(email.toLowerCase().trim()).get();
+        if (docRef.exists) {
+          const data = docRef.data();
+          currentUserRole = 'TEACHER';
+          currentTeacherPermissions = {
+            canExportCSV: data.canExportCSV !== false,
+            canDeleteRecord: data.canDeleteRecord === true
+          };
+          applyRoleUI(false, email);
+          closeAdminAuthModal();
+          document.getElementById('adminModal').classList.add('show');
+          loadAdminRecords();
+        } else {
+          document.getElementById('adminAuthError').style.display = 'block';
+          document.getElementById('adminAuthError').textContent = '⛔ 등록되지 않은 선생님 계정입니다. 메인 관리자에게 등록을 요청하세요.';
+          firebase.auth().signOut();
+        }
+      } catch (err) {
+        console.error("Teacher verification error:", err);
+        document.getElementById('adminAuthError').style.display = 'block';
+        document.getElementById('adminAuthError').textContent = '인증 확인 중 오류가 발생했습니다.';
+      }
+    }
+
+    function applyRoleUI(isMainAdmin, email) {
+      document.getElementById('currentAdminEmailDisplay').textContent = email;
+      const roleBadge = document.getElementById('adminRoleBadge');
+      const tabTeachersBtn = document.getElementById('tabBtnTeachers');
+      const btnExport = document.getElementById('btnExportCSV');
+
+      if (isMainAdmin) {
+        roleBadge.textContent = '👑 메인 관리자';
+        roleBadge.style.background = '#fef3c7';
+        roleBadge.style.color = '#b45309';
+        roleBadge.style.borderColor = '#fde68a';
+        tabTeachersBtn.style.display = 'inline-block';
+        if (btnExport) btnExport.style.display = 'inline-flex';
+      } else {
+        roleBadge.textContent = '👥 선생님';
+        roleBadge.style.background = '#ecfdf5';
+        roleBadge.style.color = '#065f46';
+        roleBadge.style.borderColor = '#a7f3d0';
+        tabTeachersBtn.style.display = 'none';
+        if (btnExport) {
+          btnExport.style.display = currentTeacherPermissions.canExportCSV ? 'inline-flex' : 'none';
+        }
+      }
+      switchAdminSubTab('records');
+    }
+
+    function switchAdminSubTab(tab) {
+      const btnRec = document.getElementById('tabBtnRecords');
+      const btnTeach = document.getElementById('tabBtnTeachers');
+      const viewRec = document.getElementById('adminViewRecords');
+      const viewTeach = document.getElementById('adminViewTeachers');
+
+      if (tab === 'records') {
+        btnRec.className = 'btn btn-primary';
+        btnTeach.className = 'btn btn-outline';
+        viewRec.style.display = 'block';
+        viewTeach.style.display = 'none';
+      } else if (tab === 'teachers') {
+        btnRec.className = 'btn btn-outline';
+        btnTeach.className = 'btn btn-primary';
+        viewRec.style.display = 'none';
+        viewTeach.style.display = 'block';
+        loadTeacherList();
+      }
+    }
+
+    /* --------------------------------------------------
+       TEACHER ACCOUNT & PERMISSION MANAGEMENT (MAIN ADMIN)
+    -------------------------------------------------- */
+    async function registerNewTeacher() {
+      const emailInput = document.getElementById('newTeacherEmail');
+      const email = emailInput.value.trim().toLowerCase();
+      if (!email || !email.includes('@')) {
+        alert('올바른 구글 이메일 주소를 입력해 주세요.');
+        return;
+      }
+
+      const canExport = document.getElementById('permExportCSV').checked;
+      const canDelete = document.getElementById('permDeleteRecord').checked;
+
+      try {
+        await db.collection("teacher_roles").doc(email).set({
+          email: email,
+          canExportCSV: canExport,
+          canDeleteRecord: canDelete,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+          registeredDate: new Date().toLocaleString('ko-KR')
+        });
+
+        alert(`선생님 계정(${email})이 성공적으로 등록되었습니다!`);
+        emailInput.value = '';
+        loadTeacherList();
+      } catch (err) {
+        console.error("Register teacher error:", err);
+        alert("선생님 등록 실패: " + err.message);
+      }
+    }
+
+    async function loadTeacherList() {
+      const tbody = document.getElementById('teacherTableBody');
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:1.5rem;">선생님 목록을 불러오는 중...</td></tr>';
+
+      if (!db) return;
+
+      try {
+        const snapshot = await db.collection("teacher_roles").get();
+        if (snapshot.empty) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:1.5rem; color:var(--text-muted);">등록된 추가 선생님이 없습니다. 위에서 새 선생님을 등록해 보세요.</td></tr>';
+          return;
+        }
+
+        let html = '';
+        snapshot.forEach((doc) => {
+          const t = doc.data();
+          html += `
+            <tr>
+              <td><strong>${t.email}</strong></td>
+              <td>
+                <input type="checkbox" ${t.canExportCSV ? 'checked' : ''} onchange="updateTeacherPerm('${t.email}', 'canExportCSV', this.checked)" /> 허용
+              </td>
+              <td>
+                <input type="checkbox" ${t.canDeleteRecord ? 'checked' : ''} onchange="updateTeacherPerm('${t.email}', 'canDeleteRecord', this.checked)" /> 허용
+              </td>
+              <td>${t.registeredDate || '-'}</td>
+              <td>
+                <button class="btn btn-danger" style="padding:0.25rem 0.6rem; font-size:0.75rem;" onclick="deleteTeacherAccount('${t.email}')">삭제</button>
+              </td>
+            </tr>
+          `;
+        });
+        tbody.innerHTML = html;
+      } catch (err) {
+        console.error("Load teachers error:", err);
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--danger); padding:1.5rem;">선생님 목록을 불러오지 못했습니다.</td></tr>';
+      }
+    }
+
+    async function updateTeacherPerm(email, field, value) {
+      try {
+        await db.collection("teacher_roles").doc(email).update({
+          [field]: value
+        });
+        console.log(`Permission updated for ${email}: ${field} = ${value}`);
+      } catch (err) {
+        console.error("Update perm error:", err);
+        alert("권한 업데이트 실패: " + err.message);
+      }
+    }
+
+    async function deleteTeacherAccount(email) {
+      if (!confirm(`정말 ${email} 선생님의 관리 권한을 삭제하시겠습니까?`)) return;
+
+      try {
+        await db.collection("teacher_roles").doc(email).delete();
+        alert("선생님 권한이 삭제되었습니다.");
+        loadTeacherList();
+      } catch (err) {
+        console.error("Delete teacher error:", err);
+        alert("삭제 실패: " + err.message);
+      }
     }
 
     function logoutAdmin() {
