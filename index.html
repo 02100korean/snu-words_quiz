@@ -652,11 +652,47 @@
 
       <!-- Tab 1: Student Records View -->
       <div id="adminViewRecords">
-        <div style="display:flex; justify-content:space-between; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.75rem;">
-          <input type="text" id="adminSearchInput" placeholder="🔍 학생 이름으로 검색..." class="typing-input" style="max-width:240px; padding:0.5rem 0.8rem; font-size:0.88rem; margin-bottom:0;" oninput="filterAdminTable()" />
-          <div style="display:flex; gap:0.5rem;">
-            <button class="btn btn-outline" style="padding:0.5rem 0.9rem; font-size:0.85rem;" onclick="loadAdminRecords()">🔄 새로고침</button>
-            <button id="btnExportCSV" class="btn btn-primary" style="padding:0.5rem 0.9rem; font-size:0.85rem;" onclick="exportAdminDataCSV()">📥 엑셀(CSV) 다운로드</button>
+        <!-- Direct Filter Control Bar in Admin Page -->
+        <div style="background:#f8fafc; border:1px solid var(--border); border-radius:12px; padding:0.85rem 1rem; margin-bottom:0.85rem; display:flex; flex-direction:column; gap:0.6rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+            <span style="font-size:0.9rem; font-weight:800; color:var(--primary); display:flex; align-items:center; gap:0.3rem;">
+              🔍 실시간 학습 기록 필터링
+            </span>
+            <div style="display:flex; gap:0.5rem;">
+              <button class="btn btn-outline" style="padding:0.4rem 0.8rem; font-size:0.82rem;" onclick="resetAdminFilters()">필터 초기화</button>
+              <button class="btn btn-outline" style="padding:0.4rem 0.8rem; font-size:0.82rem;" onclick="loadAdminRecords()">🔄 새로고침</button>
+              <button id="btnExportCSV" class="btn btn-primary" style="padding:0.4rem 0.85rem; font-size:0.82rem;" onclick="exportAdminDataCSV()">📥 엑셀(CSV) 다운로드</button>
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:0.5rem; align-items:center;">
+            <input type="text" id="adminSearchInput" placeholder="학생 이름 검색..." class="typing-input" style="padding:0.45rem 0.75rem; font-size:0.85rem; margin-bottom:0;" oninput="filterAdminTable()" />
+            <select id="adminFilterMode" style="padding:0.45rem 0.75rem; font-size:0.85rem; border-radius:10px; border:1.5px solid var(--border); font-weight:600;" onchange="filterAdminTable()">
+              <option value="ALL">전체 모드 (All)</option>
+              <option value="choice">🎯 4지선다 퀴즈</option>
+              <option value="spelling">✍️ 단어 직접 쓰기</option>
+              <option value="match">🧩 짝 맞추기</option>
+            </select>
+            <select id="adminFilterUnit" style="padding:0.45rem 0.75rem; font-size:0.85rem; border-radius:10px; border:1.5px solid var(--border); font-weight:600;" onchange="filterAdminTable()">
+              <option value="ALL">전체 단원 (All Units)</option>
+              <option value="1">1단원 진로와 적성</option>
+              <option value="2">2단원 건강한 삶</option>
+              <option value="3">3단원 선택과 변화</option>
+              <option value="4">4단원 기후와 문화</option>
+              <option value="5">5단원 여행의 즐거움</option>
+              <option value="6">6단원 공연과 축제</option>
+              <option value="7">7단원 숫자로 보는 세상</option>
+              <option value="8">8단원 대중문화</option>
+              <option value="9">9단원 스포츠의 세계</option>
+            </select>
+            <select id="adminFilterScore" style="padding:0.45rem 0.75rem; font-size:0.85rem; border-radius:10px; border:1.5px solid var(--border); font-weight:600;" onchange="filterAdminTable()">
+              <option value="ALL">정답률 전체</option>
+              <option value="100">🏆 100% 만점만</option>
+              <option value="80">✅ 80% 이상 (우수)</option>
+              <option value="under80">⚠️ 80% 미만 (보충 필요)</option>
+            </select>
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted);">
+            조회된 결과: <strong id="adminFilterCount" style="color:var(--primary);">0</strong>건
           </div>
         </div>
 
@@ -736,6 +772,7 @@
         <span>👤 학습자:</span>
         <span id="headerUserName">게스트</span>
         <button class="user-edit-btn" onclick="openNameModal()">[수정]</button>
+        <button class="user-edit-btn" style="color:#fecaca; margin-left:6px;" onclick="resetCurrentUnitStudentData()" title="현재 선택된 단원의 학습 및 오답 기록을 삭제합니다">[현재 단원 학습 기록 삭제]</button>
       </div>
       <div class="user-pill" style="background: rgba(245, 158, 11, 0.25); border: 1px solid rgba(245, 158, 11, 0.5);">
         <span>🔥 연속 학습:</span>
@@ -1530,10 +1567,16 @@
         });
     }
 
+    let adminFilteredRecords = [];
+
     function renderAdminTable(records) {
+      adminFilteredRecords = records;
+      const countEl = document.getElementById('adminFilterCount');
+      if (countEl) countEl.textContent = records.length;
+
       const tbody = document.getElementById('adminTableBody');
       if (records.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--text-muted);">아직 제출된 학생 학습 기록이 없습니다.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--text-muted);">조건에 일치하는 학습 기록이 없습니다.</td></tr>';
         return;
       }
 
@@ -1558,19 +1601,56 @@
     }
 
     function filterAdminTable() {
-      const query = document.getElementById('adminSearchInput').value.trim().toLowerCase();
-      const filtered = adminRecordsCache.filter(r => (r.studentName || '').toLowerCase().includes(query));
+      const nameQuery = (document.getElementById('adminSearchInput')?.value || '').trim().toLowerCase();
+      const modeFilter = document.getElementById('adminFilterMode')?.value || 'ALL';
+      const unitFilter = document.getElementById('adminFilterUnit')?.value || 'ALL';
+      const scoreFilter = document.getElementById('adminFilterScore')?.value || 'ALL';
+
+      const filtered = adminRecordsCache.filter(r => {
+        // 1. Name query
+        if (nameQuery && !(r.studentName || '').toLowerCase().includes(nameQuery)) {
+          return false;
+        }
+        // 2. Mode filter
+        if (modeFilter !== 'ALL' && r.mode !== modeFilter) {
+          return false;
+        }
+        // 3. Unit filter
+        if (unitFilter !== 'ALL') {
+          const uStr = String(r.unit || '');
+          if (!uStr.startsWith(unitFilter) && !uStr.includes(unitFilter + '단원')) {
+            return false;
+          }
+        }
+        // 4. Score filter
+        const acc = Number(r.accuracy || 0);
+        if (scoreFilter === '100' && acc !== 100) return false;
+        if (scoreFilter === '80' && acc < 80) return false;
+        if (scoreFilter === 'under80' && acc >= 80) return false;
+
+        return true;
+      });
+
       renderAdminTable(filtered);
     }
 
+    function resetAdminFilters() {
+      if (document.getElementById('adminSearchInput')) document.getElementById('adminSearchInput').value = '';
+      if (document.getElementById('adminFilterMode')) document.getElementById('adminFilterMode').value = 'ALL';
+      if (document.getElementById('adminFilterUnit')) document.getElementById('adminFilterUnit').value = 'ALL';
+      if (document.getElementById('adminFilterScore')) document.getElementById('adminFilterScore').value = 'ALL';
+      renderAdminTable(adminRecordsCache);
+    }
+
     function exportAdminDataCSV() {
-      if (adminRecordsCache.length === 0) {
+      const targetList = adminFilteredRecords.length > 0 ? adminFilteredRecords : adminRecordsCache;
+      if (targetList.length === 0) {
         alert("다운로드할 데이터가 없습니다.");
         return;
       }
 
       let csv = "\uFEFF완료일시,학생이름,학습모드,선택단원,학습언어,정답수,전체문항,정답률,스트릭\n";
-      adminRecordsCache.forEach(r => {
+      targetList.forEach(r => {
         csv += `"${r.clientDate || ''}","${r.studentName}","${r.mode}","${r.unit}","${r.language}",${r.correctCount},${r.totalQuestions},"${r.accuracy}%","${r.streak || 1}일"\n`;
       });
 
@@ -2058,62 +2138,21 @@
     }
 
     /* --------------------------------------------------
-       5. WRONG ONLY FLASHCARD REVIEW with Pause
+       WRONG BANK (SCOPED TO CURRENT SELECTED UNIT/SECTION)
     -------------------------------------------------- */
-    function initWrongFlashcard() {
-      wrongFlashIdx = 0;
-      document.getElementById('wrongFlashPauseOverlay')?.classList.remove('show');
-      updateWrongFlashcardUI();
-    }
-
-    function updateWrongFlashcardUI() {
-      const wrongItems = Object.values(wrongBank).map(e => e.item);
-      const emptyDiv = document.getElementById('wrongFlashEmpty');
-      const contentDiv = document.getElementById('wrongFlashContent');
-
-      if (wrongItems.length === 0) {
-        emptyDiv.style.display = 'block';
-        contentDiv.style.display = 'none';
-        return;
+    function getScopedWrongEntries() {
+      const allEntries = Object.values(wrongBank);
+      if (selectedSelection === 'ALL') {
+        return allEntries;
+      } else if (selectedSelection.startsWith('UNIT:')) {
+        const unitName = selectedSelection.replace('UNIT:', '');
+        return allEntries.filter(e => e.item && e.item.unit === unitName);
+      } else if (selectedSelection.startsWith('SECTION:')) {
+        const secName = selectedSelection.replace('SECTION:', '');
+        return allEntries.filter(e => e.item && e.item.section === secName);
       }
-
-      emptyDiv.style.display = 'none';
-      contentDiv.style.display = 'block';
-
-      if (wrongFlashIdx >= wrongItems.length) wrongFlashIdx = 0;
-      const item = wrongItems[wrongFlashIdx];
-      const wrapper = document.querySelector('#view-wrongFlashcard .flashcard-wrapper');
-      wrapper.classList.remove('flipped');
-
-      document.getElementById('wrongFlashKr').textContent = item.kr;
-      document.getElementById('wrongFlashTrans').textContent = item[currentLang] || item.en;
-      document.getElementById('wrongFlashSection').textContent = `${item.section} (p.${item.page})`;
-      document.getElementById('wrongFlashProgress').textContent = `${wrongFlashIdx + 1} / ${wrongItems.length}`;
-
-      const langNames = { en: 'ENGLISH', zh: 'CHINESE', ja: 'JAPANESE', mn: 'MONGOLIAN', vi: 'VIETNAMESE', ru: 'RUSSIAN' };
-      document.getElementById('wrongFlashLangLabel').textContent = langNames[currentLang] || 'TRANSLATION';
+      return allEntries;
     }
-
-    function prevWrongFlash() {
-      const wrongItems = Object.values(wrongBank);
-      if (wrongFlashIdx > 0) {
-        wrongFlashIdx--;
-        updateWrongFlashcardUI();
-      }
-    }
-
-    function nextWrongFlash() {
-      const wrongItems = Object.values(wrongBank);
-      if (wrongFlashIdx < wrongItems.length - 1) {
-        wrongFlashIdx++;
-        updateWrongFlashcardUI();
-      }
-    }
-
-    /* --------------------------------------------------
-       6. WRONG REVIEW TRAINING
-    -------------------------------------------------- */
-    let wrongQuizItem = null;
 
     function recordWrongItem(item) {
       if (!wrongBank[item.kr]) {
@@ -2124,7 +2163,8 @@
     }
 
     function updateWrongBadges() {
-      const count = Object.keys(wrongBank).length;
+      const scoped = getScopedWrongEntries();
+      const count = scoped.length;
       const b1 = document.getElementById('wrongBadge');
       const b2 = document.getElementById('wrongFlashBadge');
 
@@ -2139,12 +2179,97 @@
       }
     }
 
+    // 학생이 현재 선택된 단원의 학습 및 오답 기록을 삭제
+    function resetCurrentUnitStudentData() {
+      const scopeName = selectedSelection === 'ALL' ? '1~9단원 전체' : selectedSelection.replace('UNIT:','').replace('SECTION:','');
+      
+      if (!confirm(`[${scopeName}]의 학습 기록이 모두 삭제됩니다. 삭제하시겠습니까?`)) {
+        return;
+      }
+
+      const scoped = getScopedWrongEntries();
+      scoped.forEach(e => {
+        if (e && e.item && e.item.kr) {
+          delete wrongBank[e.item.kr];
+        }
+      });
+
+      localStorage.setItem(STORAGE_KEY_WRONGBANK, JSON.stringify(wrongBank));
+      localStorage.removeItem(STORAGE_KEY_PROGRESS);
+      updateWrongBadges();
+
+      alert(`[${scopeName}]의 학습 기록을 삭제했습니다.`);
+      startMode();
+    }
+
+    /* --------------------------------------------------
+       5. WRONG ONLY FLASHCARD REVIEW with Pause (Scoped)
+    -------------------------------------------------- */
+    function initWrongFlashcard() {
+      wrongFlashIdx = 0;
+      document.getElementById('wrongFlashPauseOverlay')?.classList.remove('show');
+      updateWrongFlashcardUI();
+    }
+
+    function updateWrongFlashcardUI() {
+      const scopedEntries = getScopedWrongEntries();
+      const emptyDiv = document.getElementById('wrongFlashEmpty');
+      const contentDiv = document.getElementById('wrongFlashContent');
+
+      if (scopedEntries.length === 0) {
+        emptyDiv.style.display = 'block';
+        contentDiv.style.display = 'none';
+        const scopeText = selectedSelection === 'ALL' ? '전체 단원' : selectedSelection.replace('UNIT:','').replace('SECTION:','');
+        emptyDiv.querySelector('p').textContent = `선택된 [${scopeText}]에 등록된 오답이 없습니다.`;
+        return;
+      }
+
+      emptyDiv.style.display = 'none';
+      contentDiv.style.display = 'block';
+
+      if (wrongFlashIdx >= scopedEntries.length) wrongFlashIdx = 0;
+      const item = scopedEntries[wrongFlashIdx].item;
+      const wrapper = document.querySelector('#view-wrongFlashcard .flashcard-wrapper');
+      wrapper.classList.remove('flipped');
+
+      document.getElementById('wrongFlashKr').textContent = item.kr;
+      document.getElementById('wrongFlashTrans').textContent = item[currentLang] || item.en;
+      document.getElementById('wrongFlashSection').textContent = `${item.section} (p.${item.page})`;
+      document.getElementById('wrongFlashProgress').textContent = `${wrongFlashIdx + 1} / ${scopedEntries.length}`;
+
+      const langNames = { en: 'ENGLISH', zh: 'CHINESE', ja: 'JAPANESE', mn: 'MONGOLIAN', vi: 'VIETNAMESE', ru: 'RUSSIAN' };
+      document.getElementById('wrongFlashLangLabel').textContent = langNames[currentLang] || 'TRANSLATION';
+    }
+
+    function prevWrongFlash() {
+      const scoped = getScopedWrongEntries();
+      if (wrongFlashIdx > 0) {
+        wrongFlashIdx--;
+        updateWrongFlashcardUI();
+      }
+    }
+
+    function nextWrongFlash() {
+      const scoped = getScopedWrongEntries();
+      if (wrongFlashIdx < scoped.length - 1) {
+        wrongFlashIdx++;
+        updateWrongFlashcardUI();
+      }
+    }
+
+    /* --------------------------------------------------
+       6. WRONG REVIEW TRAINING (Scoped)
+    -------------------------------------------------- */
+    let wrongQuizItem = null;
+
     function initWrongReview() {
       document.getElementById('wrongReviewPauseOverlay')?.classList.remove('show');
-      const wrongKeys = Object.keys(wrongBank);
-      if (wrongKeys.length === 0) {
+      const scopedEntries = getScopedWrongEntries();
+      if (scopedEntries.length === 0) {
         document.getElementById('wrongEmptyMsg').style.display = 'block';
         document.getElementById('wrongActiveContent').style.display = 'none';
+        const scopeText = selectedSelection === 'ALL' ? '전체 단원' : selectedSelection.replace('UNIT:','').replace('SECTION:','');
+        document.getElementById('wrongEmptyMsg').querySelector('p').textContent = `선택된 [${scopeText}]에 틀린 단어가 없습니다.`;
         return;
       }
 
@@ -2154,28 +2279,27 @@
     }
 
     function nextWrongQuizQuestion() {
-      const wrongKeys = Object.keys(wrongBank);
-      if (wrongKeys.length === 0) {
+      const scopedEntries = getScopedWrongEntries();
+      if (scopedEntries.length === 0) {
         triggerConfetti();
         document.getElementById('wrongEmptyMsg').style.display = 'block';
         document.getElementById('wrongEmptyMsg').innerHTML = `
           <div style="font-size:3.5rem; margin-bottom:1rem;">🏆</div>
-          <h3 style="font-size:1.6rem; font-weight:800; color:var(--primary); margin-bottom:0.5rem;">축하합니다! 모든 오답을 마스터했습니다!</h3>
-          <p style="color:var(--text-muted);">오답 문제들을 모두 해결하여 목록이 비워졌습니다.</p>
+          <h3 style="font-size:1.6rem; font-weight:800; color:var(--primary); margin-bottom:0.5rem;">축하합니다! 이 단원의 모든 오답을 마스터했습니다!</h3>
+          <p style="color:var(--text-muted);">현재 선택된 단원의 오답을 모두 정복했습니다.</p>
         `;
         document.getElementById('wrongActiveContent').style.display = 'none';
         return;
       }
 
-      const randKey = wrongKeys[Math.floor(Math.random() * wrongKeys.length)];
-      const entry = wrongBank[randKey];
-      wrongQuizItem = entry;
+      const randEntry = scopedEntries[Math.floor(Math.random() * scopedEntries.length)];
+      wrongQuizItem = randEntry;
 
-      document.getElementById('wrongMasteryStatus').textContent = `남은 오답: ${wrongKeys.length}개`;
-      document.getElementById('wrongPrompt').textContent = entry.item[currentLang] || entry.item.en;
+      document.getElementById('wrongMasteryStatus').textContent = `남은 오답: ${scopedEntries.length}개`;
+      document.getElementById('wrongPrompt').textContent = randEntry.item[currentLang] || randEntry.item.en;
 
-      const correctAns = entry.item.kr;
-      const others = RAW_VOCAB.filter(v => v.kr !== entry.item.kr);
+      const correctAns = randEntry.item.kr;
+      const others = RAW_VOCAB.filter(v => v.kr !== randEntry.item.kr);
       const dist = others.sort(() => 0.5 - Math.random()).slice(0, 3).map(d => d.kr);
       const options = [...dist, correctAns].sort(() => 0.5 - Math.random());
 
