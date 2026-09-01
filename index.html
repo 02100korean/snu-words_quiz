@@ -152,6 +152,7 @@
       margin-bottom: 1.25rem;
     }
     .tab-btn {
+      position: relative;
       background: var(--surface);
       border: 1.5px solid var(--border);
       padding: 0.7rem 0.4rem;
@@ -1716,6 +1717,7 @@
         filteredVocab = RAW_VOCAB.filter(v => v.section === secName);
       }
       document.getElementById('vocabCount').textContent = filteredVocab.length;
+      updateWrongBadges();
     }
 
     function switchMode(mode) {
@@ -2145,11 +2147,11 @@
       if (selectedSelection === 'ALL') {
         return allEntries;
       } else if (selectedSelection.startsWith('UNIT:')) {
-        const unitName = selectedSelection.replace('UNIT:', '');
-        return allEntries.filter(e => e.item && e.item.unit === unitName);
+        const unitName = selectedSelection.replace('UNIT:', '').trim();
+        return allEntries.filter(e => e.item && (e.item.unit === unitName || (e.item.unit && e.item.unit.includes(unitName))));
       } else if (selectedSelection.startsWith('SECTION:')) {
-        const secName = selectedSelection.replace('SECTION:', '');
-        return allEntries.filter(e => e.item && e.item.section === secName);
+        const secName = selectedSelection.replace('SECTION:', '').trim();
+        return allEntries.filter(e => e.item && (e.item.section === secName || (e.item.section && e.item.section.includes(secName))));
       }
       return allEntries;
     }
